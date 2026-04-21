@@ -99,6 +99,26 @@ tvm-tuning/
 
 ---
 
+
+## 📈 Speedup across shapes
+
+| Batch Size | D=1024 | D=2048 | D=4096 |
+|-----------|-------:|-------:|-------:|
+| 1 | 6.31× | 5.14× | 1.76× |
+| 32 | 5.68× | 5.43× | 1.83× |
+| 128 | 4.95× | 4.17× | 1.91× |
+| 512 | 2.64× | 1.78× | 1.76× |
+| 1024 | 2.73× | 1.93× | 1.58× |
+
+Speedup is highest at small batch sizes where the RMSNorm overhead dominates. At large batch + large dim the GEMM saturates HBM bandwidth and both kernels converge.
+
+## 🔢 dtype support
+
+| dtype | Speedup | Notes |
+|-------|--------:|-------|
+| fp16 | 2.20× | cuBLAS HGEMM + CuTe RMSNorm |
+| bf16 | 1.55× | cublasGemmEx + CuTe RMSNorm |
+
 ## 🔧 Technical Deep-Dive
 
 ### 1. Custom MLIR Dialect (`LLMOps.td`)
@@ -177,6 +197,7 @@ Bayesian optimisation over TIR transformations across all 4 GPUs in parallel:
 | Pattern rewriting | `OpRewritePattern` + `GreedyPatternRewriteDriver` |
 | GPU kernel | CUDA C++ (SM80/SM86) + cuBLAS HGEMM |
 | Auto-tuning | TVM MetaSchedule + XGBoost cost model |
+| Tiling (roadmap) | cuTile / CUTLASS CuTe — replace cuBLAS HGEMM with explicit tile descriptors for SM80 |
 | Build | CMake 4.3 + Ninja, gcc 11.4, nvcc 12.3 |
 | Testing | MLIR lit + FileCheck, pytest |
 | Cluster | 4× NVIDIA A30, 24 GB HBM2, CUDA 12.3 |
