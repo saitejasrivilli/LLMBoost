@@ -1,0 +1,37 @@
+name: Build and Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download LLVM 17
+        run: |
+          wget -q https://github.com/llvm/llvm-project/releases/download/llvmorg-17.0.6/clang+llvm-17.0.6-x86_64-linux-gnu-ubuntu-22.04.tar.xz
+          tar -xf clang+llvm-17.0.6-x86_64-linux-gnu-ubuntu-22.04.tar.xz
+          echo "LLVM_BUILD=$PWD/clang+llvm-17.0.6-x86_64-linux-gnu-ubuntu-22.04" >> $GITHUB_ENV
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get install -y ninja-build
+
+      - name: Configure MLIR pass
+        run: |
+          mkdir -p mlir-pass/build && cd mlir-pass/build
+          cmake -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_C_COMPILER=/usr/bin/gcc \
+            -DCMAKE_CXX_COMPILER=/usr/bin/g++ \
+            -DMLIR_DIR=$LLVM_BUILD/lib/cmake/mlir \
+            -DLLVM_DIR=$LLVM_BUILD/lib/cmake/llvm \
+            ..
+
+      - name: Build MLIR pass library
+        run: cd mlir-pass/build && ninja MLIRLLMTransforms
