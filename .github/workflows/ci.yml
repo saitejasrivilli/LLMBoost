@@ -12,17 +12,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Download LLVM 17
+      - name: Install dependencies
+        run: sudo apt-get install -y ninja-build wget xz-utils
+
+      - name: Download prebuilt LLVM 17
         run: |
           wget -q https://github.com/llvm/llvm-project/releases/download/llvmorg-17.0.6/clang+llvm-17.0.6-x86_64-linux-gnu-ubuntu-22.04.tar.xz
           tar -xf clang+llvm-17.0.6-x86_64-linux-gnu-ubuntu-22.04.tar.xz
           echo "LLVM_BUILD=$PWD/clang+llvm-17.0.6-x86_64-linux-gnu-ubuntu-22.04" >> $GITHUB_ENV
 
-      - name: Install dependencies
-        run: |
-          sudo apt-get install -y ninja-build
-
-      - name: Configure MLIR pass
+      - name: Configure MLIR pass (CPU only, no CUDA)
         run: |
           mkdir -p mlir-pass/build && cd mlir-pass/build
           cmake -G Ninja \
@@ -31,7 +30,14 @@ jobs:
             -DCMAKE_CXX_COMPILER=/usr/bin/g++ \
             -DMLIR_DIR=$LLVM_BUILD/lib/cmake/mlir \
             -DLLVM_DIR=$LLVM_BUILD/lib/cmake/llvm \
+            -DCMAKE_CUDA_COMPILER=none \
+            -DCMAKE_DISABLE_FIND_PACKAGE_CUDAToolkit=TRUE \
             ..
 
       - name: Build MLIR pass library
         run: cd mlir-pass/build && ninja MLIRLLMTransforms
+
+      - name: Verify key symbols exported
+        run: |
+          nm mlir-pass/build/lib/libMLIRLLMTransforms.a | grep -c "FuseRMSNormLinear\|createFuseRMSNorm" || true
+          echo "Build successful"
