@@ -23,10 +23,10 @@ LLMBoost is an **MLIR compiler pass** that automatically detects and fuses the `
 
 ## 📊 Benchmark Results
 
-\`\`\`
+```
 Device  :  4× NVIDIA A30  (SM80, 24 GB HBM2, CUDA 12.3)
 Shape   :  [512, 4096] × [4096, 4096]   fp16
-\`\`\`
+```
 
 | Kernel | Latency | Speedup | Notes |
 |--------|--------:|--------:|-------|
@@ -47,11 +47,11 @@ Shape   :  [512, 4096] × [4096, 4096]   fp16
 
 Every transformer decoder layer runs RMSNorm immediately before a linear projection. The unfused path:
 
-\`\`\`
+```
 x ──► [HBM read] ──► RMSNorm ──► [HBM write] ──► [HBM read] ──► Linear ──► y
                                         ↑
                              eliminated by LLMBoost
-\`\`\`
+```
 
 The normalised activation is written to HBM then immediately read back for the GEMM. At 4096-wide hidden dimensions this round-trip is the dominant memory bottleneck in autoregressive decode. LLMBoost fuses both ops — normalised values stay on-chip.
 
@@ -73,7 +73,7 @@ If the normalised tensor feeds two downstream consumers — two projections in a
 
 ## 🏗️ Architecture
 
-\`\`\`
+```
 mlir-pass/
 ├── include/Transforms/
 │   ├── LLMOps.td              ← TableGen: fused op declaration + verifier
@@ -95,7 +95,7 @@ tvm-tuning/
 └── benchmarks/
     ├── benchmark.py           ← 3-way latency benchmark
     └── test_correctness.py    ← pytest correctness suite
-\`\`\`
+```
 
 ---
 
@@ -105,7 +105,7 @@ tvm-tuning/
 
 Defined `llm.fused_rmsnorm_linear` in TableGen with four typed inputs, a shape verifier, and custom assembly format. The verifier fires at IR construction time — bad shapes are caught before execution:
 
-\`\`\`mlir
+```mlir
 // BEFORE: three HBM transactions
 %sum_sq = linalg.generic { iterator_types = ["parallel", "reduction"] } ...
 %normed  = linalg.generic { iterator_types = ["parallel", "parallel"]  } ...
@@ -115,13 +115,13 @@ Defined `llm.fused_rmsnorm_linear` in TableGen with four typed inputs, a shape v
 %result = llm.fused_rmsnorm_linear(%x, %w_norm, %w_proj, epsilon = 1.0e-5)
           : (tensor<512x4096xf16>, tensor<4096xf16>, tensor<4096x4096xf16>)
          -> tensor<512x4096xf16>
-\`\`\`
+```
 
 ### 2. Pattern Matcher (`FuseRMSNormLinear.cpp`)
 
 `OpRewritePattern<linalg::MatmulOp>` fires when a matmul's A-input comes from a `linalg.generic` matching the RMSNorm normalize signature. Two checks: iterator types AND block body structure — catching only the exact pattern, not false positives like L2 norm or softmax denominators:
 
-\`\`\`cpp
+```cpp
 static bool isRMSNormReduceBody(linalg::GenericOp op) {
     // iterator_types = ["parallel", "reduction"]
     // block body: mulf → addf  (sum-of-squares)
@@ -130,13 +130,13 @@ static bool isRMSNormNormalizeBody(linalg::GenericOp op) {
     // iterator_types = ["parallel", "parallel"]
     // block body: contains math::RsqrtOp
 }
-\`\`\`
+```
 
 ### 3. CUDA Kernel
 
 Two-level warp/block reduction for RMSNorm (zero global memory traffic for the intermediate), then cuBLAS HGEMM with Tensor Core math mode:
 
-\`\`\`cuda
+```cuda
 // Warp reduce → shared memory → block reduce → rsqrt
 for (int m = 16; m > 0; m >>= 1)
     ss += __shfl_xor_sync(0xffffffff, ss, m);
@@ -148,15 +148,15 @@ if (wid == 0) {
         ss += __shfl_xor_sync(0xffffffff, ss, m);
     if (lane == 0) smem[0] = rsqrtf(ss / d_in + epsilon);
 }
-\`\`\`
+```
 
 ### 4. MLIR Lowering Pipeline
 
-\`\`\`bash
+```bash
 mlir-opt input.mlir \
   --fuse-rmsnorm-linear \      # detects pattern, emits llm.fused_rmsnorm_linear
   --convert-llm-to-llvm        # lowers to LLVM external call → libLLMKernels.so
-\`\`\`
+```
 
 ### 5. TVM MetaSchedule Tuning (`tvm_tune.py`)
 
@@ -185,7 +185,7 @@ Bayesian optimisation over TIR transformations across all 4 GPUs in parallel:
 
 ## 🚀 Build & Run
 
-\`\`\`bash
+```bash
 # 1. Download prebuilt LLVM 17 (no compile needed)
 wget https://github.com/llvm/llvm-project/releases/download/llvmorg-17.0.6/clang+llvm-17.0.6-x86_64-linux-gnu-ubuntu-22.04.tar.xz
 tar -xf clang+llvm-17.0.6-x86_64-linux-gnu-ubuntu-22.04.tar.xz
@@ -216,7 +216,7 @@ cd ../..
 python scripts/run_all_gpus.py \
     --mlir_so mlir-pass/build/lib/libLLMKernels.so \
     --batch_seq 512 --d_in 4096 --d_out 4096
-\`\`\`
+```
 
 ---
 
