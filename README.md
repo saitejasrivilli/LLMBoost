@@ -37,9 +37,9 @@ Shape   :  [512, 4096] × [4096, 4096]   fp16
 
 | Metric | Value | Status |
 |--------|------:|--------|
-| max\_abs\_err | 1.07e-02 | ✅ within fp16 GEMM tolerance |
-| mean\_abs\_err | 9.27e-04 | ✅ |
-| mean\_rel\_err | 1.48e-02 | ✅ |
+| max_abs_err | 1.07e-02 | ✅ within fp16 GEMM tolerance |
+| mean_abs_err | 9.27e-04 | ✅ |
+| mean_rel_err | 1.48e-02 | ✅ |
 
 ---
 
