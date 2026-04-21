@@ -235,4 +235,4 @@ python scripts/run_all_gpus.py \
 
 **Sai Teja Srivilli** · [GitHub @saitejasrivilli](https://github.com/saitejasrivilli)
 
-Built on a 4× NVIDIA A30 cluster. All numbers are real hardware measurements.
+Built on a 4× NVIDIA A30 cluster.
