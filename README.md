@@ -197,7 +197,7 @@ Bayesian optimisation over TIR transformations across all 4 GPUs in parallel:
 | Pattern rewriting | `OpRewritePattern` + `GreedyPatternRewriteDriver` |
 | GPU kernel | CUDA C++ (SM80/SM86) + cuBLAS HGEMM |
 | Auto-tuning | TVM MetaSchedule + XGBoost cost model |
-| Tiling (roadmap) | cuTile / CUTLASS CuTe — replace cuBLAS HGEMM with explicit tile descriptors for SM80 |
+| Tiling | CUTLASS CuTe 4.2 — Layout + Tensor abstractions for RMSNorm kernel (SM80/SM86) |
 | Build | CMake 4.3 + Ninja, gcc 11.4, nvcc 12.3 |
 | Testing | MLIR lit + FileCheck, pytest |
 | Cluster | 4× NVIDIA A30, 24 GB HBM2, CUDA 12.3 |
