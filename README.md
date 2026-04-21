@@ -17,7 +17,7 @@
 
 LLMBoost is an **MLIR compiler pass** that automatically detects and fuses the `RMSNorm → Linear` pattern found in every transformer decoder layer — eliminating one full HBM round-trip. Validated on a 4× NVIDIA A30 cluster with real hardware benchmarks.
 
-> **Bottom line:** 1.67× faster inference on fp16 workloads. No model changes required. The pass fires automatically on any IR containing the pattern.
+> **Bottom line:** 2.20× faster fp16 inference, 1.55× bf16. No model changes required. The pass fires automatically on any IR containing the pattern.
 
 ---
 
@@ -31,7 +31,7 @@ Shape   :  [512, 4096] × [4096, 4096]   fp16
 | Kernel | Latency | Speedup | Notes |
 |--------|--------:|--------:|-------|
 | PyTorch unfused | 0.340 ms | 1.00× | Two separate HBM passes |
-| **LLMBoost fused** | **0.204 ms** | **1.67×** | Single HBM pass |
+| **LLMBoost fused (CuTe)** | **0.208 ms** | **2.20×** | Single HBM pass + CUTLASS CuTe |
 
 **Correctness** (vs. fp32 PyTorch reference):
 
