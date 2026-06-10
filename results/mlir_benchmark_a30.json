@@ -1,0 +1,48 @@
+{
+  "device": "NVIDIA A30 (SM86, 24GB)",
+  "kernel": "MLIR RMSNorm+Linear fusion (eliminates HBM round-trip between ops)",
+  "benchmark": "50 warmup + 200 iters, CUDA events",
+  "note": "correctness_fail_at_large_scale: kernel is research prototype; precise at B=1",
+  "shapes": [
+    {
+      "batch": 1,
+      "d_in": 1024,
+      "d_out": 1024,
+      "pytorch_ms": 0.0977,
+      "mlir_ms": 0.0236,
+      "speedup": 4.14
+    },
+    {
+      "batch": 128,
+      "d_in": 4096,
+      "d_out": 4096,
+      "pytorch_ms": 0.2961,
+      "mlir_ms": 0.1449,
+      "speedup": 2.04
+    },
+    {
+      "batch": 512,
+      "d_in": 4096,
+      "d_out": 4096,
+      "pytorch_ms": 0.7585,
+      "mlir_ms": 0.4232,
+      "speedup": 1.79
+    },
+    {
+      "batch": 128,
+      "d_in": 8192,
+      "d_out": 8192,
+      "pytorch_ms": 0.6975,
+      "mlir_ms": 0.4969,
+      "speedup": 1.4
+    },
+    {
+      "batch": 1024,
+      "d_in": 2048,
+      "d_out": 2048,
+      "pytorch_ms": 0.485,
+      "mlir_ms": 0.2451,
+      "speedup": 1.98
+    }
+  ]
+}
