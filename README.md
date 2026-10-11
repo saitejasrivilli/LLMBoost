@@ -110,7 +110,7 @@ tvm-tuning/
 | 512 | 2.64× | 1.78× | 1.76× |
 | 1024 | 2.73× | 1.93× | 1.58× |
 
-Speedup is highest at small batch sizes where the RMSNorm overhead dominates. At large batch + large dim the GEMM saturates HBM bandwidth and both kernels converge. For the separate dtype summary below, use its reported aggregate values; the single-shape example above is calculated directly from its latency measurements.
+Speedup is highest at small batch sizes where the RMSNorm overhead dominates. At large batch + large dim the GEMM saturates HBM bandwidth and both kernels converge. For the separate dtype summary below, use its reported aggregate values; the single-shape example above is calculated directly from its latency measurements. For the separate dtype summary below, use its reported aggregate values; the single-shape example above is calculated directly from its latency measurements.
 
 ## 🔢 dtype support
 
