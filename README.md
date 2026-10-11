@@ -17,7 +17,7 @@
 
 LLMBoost is an **MLIR compiler pass** that automatically detects and fuses the `RMSNorm → Linear` pattern found in every transformer decoder layer — eliminating one full HBM round-trip. Validated on a 4× NVIDIA A30 cluster with real hardware benchmarks.
 
-> **Bottom line:** 2.20× faster fp16 inference, 1.55× bf16. No model changes required. The pass fires automatically on any IR containing the pattern.
+> **For the shape shown below:** the reported latency changes from 0.340 ms to 0.208 ms, which is a 1.63× speedup (0.340 / 0.208). Results vary by batch size and hidden dimension; the shape sweep below reports those differences. The pass fires automatically on supported IR containing the pattern.
 
 ---
 
@@ -31,7 +31,7 @@ Shape   :  [512, 4096] × [4096, 4096]   fp16
 | Kernel | Latency | Speedup | Notes |
 |--------|--------:|--------:|-------|
 | PyTorch unfused | 0.340 ms | 1.00× | Two separate HBM passes |
-| **LLMBoost fused (CuTe)** | **0.208 ms** | **2.20×** | Single HBM pass + CUTLASS CuTe |
+| **LLMBoost fused (CuTe)** | **0.208 ms** | **1.63×** | Single HBM pass + CUTLASS CuTe |
 
 **Correctness** (vs. fp32 PyTorch reference):
 
@@ -110,7 +110,7 @@ tvm-tuning/
 | 512 | 2.64× | 1.78× | 1.76× |
 | 1024 | 2.73× | 1.93× | 1.58× |
 
-Speedup is highest at small batch sizes where the RMSNorm overhead dominates. At large batch + large dim the GEMM saturates HBM bandwidth and both kernels converge.
+Speedup is highest at small batch sizes where the RMSNorm overhead dominates. At large batch + large dim the GEMM saturates HBM bandwidth and both kernels converge. For the separate dtype summary below, use its reported aggregate values; the single-shape example above is calculated directly from its latency measurements.
 
 ## 🔢 dtype support
 
